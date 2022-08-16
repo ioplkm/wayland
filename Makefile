@@ -1,5 +1,5 @@
 CC = clang
-LDLIBS = -lwayland-client
+LDLIBS = -lwayland-client -lxkbcommon
 all: client
 client: client.c shm.h
 	wayland-scanner client-header < /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml > xdg-shell.h

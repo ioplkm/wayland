@@ -25,6 +25,8 @@ struct xdg_surface *xdg_surface;
 struct xdg_toplevel *xdg_toplevel;
 struct wl_callback *callback;
 
+#include "kbd.h"
+
 void bufRelease(void *data, struct wl_buffer *wl_buffer){
     wl_buffer_destroy(wl_buffer);
 }
@@ -48,14 +50,19 @@ void xdgPing(void *data, struct xdg_wm_base *xdg_wm_base, uint32_t serial) {
 struct xdg_wm_base_listener xdgListener = {xdgPing};
 
 void regAdd(void *data, struct wl_registry *wl_registry, uint32_t name, const char *interface, uint32_t version) {
-    if (strcmp(interface, wl_shm_interface.name) == 0) {
-        wl_shm = wl_registry_bind(wl_registry, name, &wl_shm_interface, 1);
-    } else if (strcmp(interface, wl_compositor_interface.name) == 0) {
-        wl_compositor = wl_registry_bind(wl_registry, name, &wl_compositor_interface, 4);
-    } else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
-        xdg_wm_base = wl_registry_bind(wl_registry, name, &xdg_wm_base_interface, 1);
-        xdg_wm_base_add_listener(xdg_wm_base, &xdgListener, NULL);
-    }
+  if (strcmp(interface, wl_shm_interface.name) == 0) {
+      wl_shm = wl_registry_bind(wl_registry, name, &wl_shm_interface, 1);
+  } else if (strcmp(interface, wl_compositor_interface.name) == 0) {
+      wl_compositor = wl_registry_bind(wl_registry, name, &wl_compositor_interface, 4);
+  } else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
+      xdg_wm_base = wl_registry_bind(wl_registry, name, &xdg_wm_base_interface, 1);
+      xdg_wm_base_add_listener(xdg_wm_base, &xdgListener, NULL);
+  }
+  //keyboard
+  else if (strcmp(interface, wl_seat_interface.name) == 0) {
+    seat = wl_registry_bind(wl_registry, name, &wl_seat_interface, 7);
+    wl_seat_add_listener(seat, &seatList, NULL);
+  }
 }
 
 void regDel(void *data, struct wl_registry *wl_registry, uint32_t name) {
@@ -107,6 +114,7 @@ void end() {
 }
 
 int main() {
+  xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
   init();
   uint32_t a = 0;
   while (wl_display_dispatch(wl_display)) {
